@@ -70,10 +70,10 @@
     getNodes: function(paths) {
       var i ,misses = [], fromCache = {};
       for (i=0; i<paths.length; i++) {
-        if(this.commitCache[path[i]] !== undefined) {
-          fromCache[paths[i]] = this._deepClone(this.commitCache[paths[i]] || undefined);
-        } else if(this.flushing[path[i]] !== undefined) {
-           fromCache[paths[i]] = this._deepClone(this.flushing[paths[i]] || undefined);
+        if (this.commitCache[paths[i]] !== undefined) {
+          fromCache[paths[i]] = this._getInternals().deepClone(this.commitCache[paths[i]] || undefined);
+        } else if(this.flushing[paths[i]] !== undefined) {
+           fromCache[paths[i]] = this._getInternals().deepClone(this.flushing[paths[i]] || undefined);
         } else {
           misses.push(paths[i]);
         }
@@ -86,16 +86,19 @@
           return nodes;
         });
       } else {
-        promise = Promising();
-        promise.fulfill(results);
+        promise = promising();
+        promise.fulfill(fromCache);
         return promise;
       }
     },
     setNodes: function(nodes) {
-      for(var i in nodes) {
+      var promise = promising();
+      for (var i in nodes) {
         this.commitCache[i] = nodes[i] || false;
       }
       this.maybeFlush();
+      promise.fulfill();
+      return promise;
     },
     maybeFlush: function() {
       if (this.putsRunning === 0) {
